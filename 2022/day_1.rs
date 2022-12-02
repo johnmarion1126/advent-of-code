@@ -17,7 +17,9 @@ fn find_elves_with_most_calories(input: String) -> i32 {
     max
 }
 
-fn find_elves_with_most_calories2(input: String) -> i32 {
+//================================================================================================
+
+fn find_elves_with_most_calories(input: String) -> i32 {
     let mut total = 0;
     let mut top_three: Vec<i32> = vec!(0, 0, 0);
 
