@@ -195,3 +195,57 @@ fn get_all_visible_trees(mut matrix: Vec<Vec<i16>>) -> i16 {
 
     total_visible_trees
 }
+
+//================================================================================================
+
+fn get_highest_scenic_score(matrix: Vec<Vec<i16>>) -> i32 {
+    let mut max = 0;
+
+    for row in 1..matrix.len() - 1 {
+        for column in 1..matrix[0].len() - 1 {
+            let curr = matrix[row][column];
+
+            let mut scenic_score = 0;
+            let mut top_visible_trees = 1;
+            let mut bot_visible_trees = 1;
+            let mut left_visible_trees = 1;
+            let mut right_visible_trees = 1;
+
+            let mut y = row - 1;
+
+            while y >= 1 && curr > matrix[y][column] {
+                top_visible_trees += 1;
+                y -= 1;
+            }
+
+            y = row + 1;
+
+            while y <= matrix.len() - 2 && curr > matrix[y][column] {
+                bot_visible_trees += 1;
+                y += 1;
+            }
+
+            let mut x = column - 1;
+
+            while x >= 1 && curr > matrix[row][x] {
+                left_visible_trees += 1;
+                x -= 1;
+            }
+
+            x = column + 1;
+
+            while x <= matrix[0].len() - 2 && curr > matrix[row][x] {
+                right_visible_trees += 1;
+                x += 1;
+            }
+
+            scenic_score =
+                top_visible_trees * bot_visible_trees * left_visible_trees * right_visible_trees;
+
+            if max < scenic_score {
+                max = scenic_score;
+            }
+        }
+    }
+    max
+}
