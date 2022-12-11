@@ -47,3 +47,58 @@ fn get_total(input: &str) -> i32 {
 
 //================================================================================================
 
+fn draw_message(input: &str) {
+    let mut crt_idx = 0;
+    let mut sprite_idx = 0;
+    let mut row = "".to_string();
+
+    for i in input.lines() {
+        let parts: Vec<_> = i.trim().split(' ').collect();
+        let mut value = 0;
+
+        if crt_idx == 40 {
+            println!("{}", row);
+            row = "".to_string();
+            crt_idx = 0;
+        }
+
+        if crt_idx == sprite_idx || crt_idx == sprite_idx + 1 || crt_idx == sprite_idx + 2 {
+            row.push('#');
+        } else {
+            row.push('.');
+        }
+
+        crt_idx += 1;
+
+        if crt_idx == 40 {
+            println!("{}", row);
+            row = "".to_string();
+            crt_idx = 0;
+        }
+
+        match parts[..] {
+            ["addx", val] => {
+                // println!("ADDX");
+                value = val.parse::<i32>().unwrap();
+            }
+            ["noop"] => {
+                // println!("NOOP");
+                continue;
+            }
+            _ => {}
+        }
+
+
+        if crt_idx == sprite_idx || crt_idx == sprite_idx + 1 || crt_idx == sprite_idx + 2 {
+            row.push('#');
+        } else {
+            row.push('.');
+        }
+
+        crt_idx += 1;
+
+        sprite_idx += value;
+
+        // update position
+    }
+}
