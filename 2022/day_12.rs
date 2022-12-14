@@ -213,3 +213,223 @@ fn a_star(map: Vec<Vec<char>>, start: Position, end: Position) -> usize {
 }
 
 //================================================================================================
+
+use colored::*;
+use std::{
+    cmp::Ordering,
+    collections::{BinaryHeap, HashSet},
+    thread,
+    time::{self, Instant},
+};
+
+type Position = [usize; 2];
+
+#[derive(Debug, Eq, PartialEq)]
+struct Square {
+    position: Position,
+    score: i32,
+    path: HashSet<Position>,
+}
+
+impl Square {
+    fn new(position: Position, score: i32, path: HashSet<Position>) -> Self {
+        Self {
+            position,
+            score,
+            path,
+        }
+    }
+}
+
+impl Ord for Square {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.score.cmp(&self.score)
+    }
+}
+
+impl PartialOrd for Square {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+fn parse_input(input: &str) -> (Vec<Vec<char>>, Vec<Position>, Position) {
+    let mut map = Vec::new();
+    let mut starts: Vec<Position> = Vec::new();
+    let mut end: Position = [0, 0];
+
+    for line in input.lines() {
+        let mut row: Vec<char> = Vec::new();
+        for character in line.trim().chars() {
+            match character {
+                'S' | 'a' => {
+                    starts.push([map.len(), row.len()]);
+                    row.push('a');
+                }
+                'E' => {
+                    end = [map.len(), row.len()];
+                    row.push('z');
+                }
+                _ => {
+                    row.push(character);
+                }
+            }
+        }
+        map.push(row);
+    }
+
+    (map, starts, end)
+}
+
+// h(n) - new position to goal
+fn manhattan_distance(new: Position, goal: &Position) -> i32 {
+    (new[0] as i32 - goal[0] as i32).abs() + (new[1] as i32 - goal[1] as i32).abs()
+}
+
+// g(n) - current position to new position
+// elevation of the destination square can be at most one higher than the current square
+fn is_viable_square(current_elevation: char, new_elevation: char) -> bool {
+    let current_value = current_elevation as u16;
+    let new_value = new_elevation as u16;
+    current_value == new_value - 1 || current_value == new_value || current_value > new_value
+}
+
+// f(n) = g(n) + h(n)
+fn a_star(map: &Vec<Vec<char>>, start: Position, end: &Position) -> i32 {
+    // Create priority queue of scores
+    let mut squares = BinaryHeap::new();
+    squares.push(Square {
+        position: start,
+        score: 1,
+        path: HashSet::new(),
+    });
+
+    // Create a hashset of visited squares
+    let mut visited: HashSet<Position> = HashSet::new();
+    visited.insert(start);
+
+    // Continue to iterate until we reach destination
+    while let Some(Square {
+        position,
+        score,
+        path,
+    }) = squares.pop()
+    {
+        let x = position[0];
+        let y = position[1];
+        let elevation = map[x][y];
+        let score = score;
+        let mut current_path = path;
+        current_path.insert([x, y]);
+
+        if &[x, y] == end {
+            return (current_path.len() - 1) as i32;
+        }
+
+        // Calculate up
+        if x > 0 && is_viable_square(elevation, map[x - 1][y]) && !visited.contains(&[x - 1, y]) {
+            let square = Square::new(
+                [x - 1, y],
+                score + manhattan_distance([x - 1, y], end),
+                current_path.clone(),
+            );
+
+            squares.push(square);
+            visited.insert([x - 1, y]);
+        }
+
+        // Calculate down
+        if x < map.len() - 1
+            && is_viable_square(elevation, map[x + 1][y])
+            && !visited.contains(&[x + 1, y])
+        {
+            let square = Square::new(
+                [x + 1, y],
+                score + manhattan_distance([x + 1, y], end),
+                current_path.clone(),
+            );
+
+            squares.push(square);
+            visited.insert([x + 1, y]);
+        }
+
+        // Calculate left
+        if y > 0 && is_viable_square(elevation, map[x][y - 1]) && !visited.contains(&[x, y - 1]) {
+            let square = Square::new(
+                [x, y - 1],
+                score + manhattan_distance([x, y - 1], end),
+                current_path.clone(),
+            );
+
+            squares.push(square);
+            visited.insert([x, y - 1]);
+        }
+
+        // Calculate right
+        if y < map[0].len() - 1
+            && is_viable_square(elevation, map[x][y + 1])
+            && !visited.contains(&[x, y + 1])
+        {
+            let square = Square::new(
+                [x, y + 1],
+                score + manhattan_distance([x, y + 1], end),
+                current_path.clone(),
+            );
+
+            squares.push(square);
+            visited.insert([x, y + 1]);
+        }
+
+        // Visuals
+
+        // let mut test: Vec<Vec<ColoredString>> = Vec::new();
+        // for a in map.iter() {
+        //     let mut row: Vec<ColoredString> = Vec::new();
+        //     for b in a {
+        //         row.push(b.to_string().white());
+        //     }
+        //     test.push(row);
+        // }
+
+        // for i in current_path.iter() {
+        //     test[i[0]][i[1]] = "#".red();
+        // }
+
+        // for row in test {
+        //     for i in row {
+        //         print!("{}", i);
+        //     }
+        //     println!();
+        // }
+
+        // if [x, y] == end {
+        //     break;
+        // }
+
+        // thread::sleep(time::Duration::from_millis(100));
+        // clearscreen::clear().unwrap();
+    }
+
+    i32::MAX
+}
+
+fn main() {
+    let input = parse_input(
+        "",
+    );
+
+    // let now = Instant::now();
+    let mut min = i32::MAX;
+
+    for index in 0..input.1.len() {
+        let value = a_star(&input.0, input.1[index], &input.2);
+        if value < min {
+            min = value;
+        }
+    }
+
+    println!("Result: {}", min);
+    // let elapsed = now.elapsed();
+    // println!("Elapsed: {:.2?}", elapsed);
+}
+
