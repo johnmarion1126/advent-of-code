@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 #[derive(Debug)]
 enum Packet {
     Num(u32),
@@ -71,42 +73,49 @@ fn parse_list(input: Vec<char>) -> Vec<Packet> {
     packet
 }
 
-fn in_correct_order(packet_1: &Vec<Packet>, packet_2: &Vec<Packet>) -> Option<bool> {
+// false == Ordering::Greater
+// true == Ordering::Less
+// equal == Ordering::Equal
+
+fn in_correct_order(packet_1: &Vec<Packet>, packet_2: &Vec<Packet>) -> Ordering {
     let mut index = 0;
 
     while index < packet_1.len() || index < packet_2.len() {
         match (&packet_1.get(index), &packet_2.get(index)) {
             (_, None) => {
-                return Some(false);
+                return Ordering::Greater;
             }
 
             (None, _) => {
-                return Some(true);
+                return Ordering::Less;
             }
 
             (Some(Packet::Num(val_1)), Some(Packet::Num(val_2))) => {
                 if val_1 < val_2 {
-                    return Some(true);
+                    return Ordering::Less;
                 } else if val_1 > val_2 {
-                    return Some(false);
+                    return Ordering::Greater;
                 }
             }
 
             (Some(Packet::List(list_1)), Some(Packet::Num(val_2))) => {
-                if let Some(x) = in_correct_order(list_1, &vec![Packet::Num(*val_2)]) {
-                    return Some(x);
+                let result = in_correct_order(list_1, &vec![Packet::Num(*val_2)]);
+                if result != Ordering::Equal {
+                    return result;
                 }
             }
 
             (Some(Packet::Num(val_1)), Some(Packet::List(list_2))) => {
-                if let Some(x) = in_correct_order(&vec![Packet::Num(*val_1)], list_2) {
-                    return Some(x);
+                let result = in_correct_order(&vec![Packet::Num(*val_1)], list_2);
+                if result != Ordering::Equal {
+                    return result;
                 }
             }
 
             (Some(Packet::List(list_1)), Some(Packet::List(list_2))) => {
-                if let Some(x) = in_correct_order(list_1, list_2) {
-                    return Some(x);
+                let result = in_correct_order(list_1, list_2); 
+                if result != Ordering::Equal {
+                    return result;
                 }
             }
         }
@@ -114,7 +123,7 @@ fn in_correct_order(packet_1: &Vec<Packet>, packet_2: &Vec<Packet>) -> Option<bo
         index += 1;
     }
 
-    None
+    Ordering::Equal
 }
 
 fn main() {
@@ -150,12 +159,19 @@ fn main() {
     for index in (0..packets.len() - 1).step_by(2) {
         counter += 1;
 
-        if in_correct_order(&packets[index], &packets[index + 1]).unwrap() {
+        // If left is less than right
+        // Increment result
+
+        // If left is greater than right or if left and right is equal
+        // Don't do anything
+
+        if let Ordering::Less = in_correct_order(&packets[index], &packets[index + 1]) {
             result += counter;
         }
     }
 
     println!("Result: {}", result);
 }
+
 
 //================================================================================================
