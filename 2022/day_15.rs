@@ -58,8 +58,9 @@ fn parse_input(input: &str) -> Option<Vec<Sensor>> {
     Some(sensors)
 }
 
-fn get_sensor_area(sensors: Vec<Sensor>, target_row: i32) -> usize {
-    let mut positions: HashSet<i32> = HashSet::new();
+fn get_sensor_area(sensors: Vec<Sensor>, target_row: i32) -> i32 {
+    let mut positions: (i32, i32) = (0, 0);
+    let mut beacons: HashSet<(i32, i32)> = HashSet::new();
 
     for sensor in sensors {
         let y_distance = (target_row - sensor.sensor_position.0).abs();
@@ -73,18 +74,23 @@ fn get_sensor_area(sensors: Vec<Sensor>, target_row: i32) -> usize {
                 (sensor.sensor_position.1 + distance) - y_distance,
             );
 
-            for num in occupied_cells.0..=occupied_cells.1 {
-                positions.insert(num);
+            if occupied_cells.0 < positions.0 {
+                positions.0 = occupied_cells.0;
+            }
+
+            if occupied_cells.1 > positions.1 {
+                positions.1 = occupied_cells.1;
             }
 
             if sensor.beacon_position.0 == target_row
+            && !beacons.contains(&(sensor.beacon_position.0, sensor.beacon_position.1))
             {
-                positions.remove(&sensor.beacon_position.0);
+                beacons.insert(sensor.beacon_position);
             }
         }
     }
 
-    positions.len() 
+    (1 + positions.1 - positions.0) - beacons.len() as i32
 }
 
 fn main() {
