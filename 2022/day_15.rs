@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, time::Instant};
 
 #[derive(Debug)]
 struct Sensor {
@@ -60,7 +60,6 @@ fn parse_input(input: &str) -> Option<Vec<Sensor>> {
 
 fn get_sensor_area(sensors: Vec<Sensor>, target_row: i32) -> usize {
     let mut positions: HashSet<i32> = HashSet::new();
-    let mut beacons_in_row: HashSet<(i32, i32)> = HashSet::new();
 
     for sensor in sensors {
         let y_distance = (target_row - sensor.sensor_position.0).abs();
@@ -79,14 +78,13 @@ fn get_sensor_area(sensors: Vec<Sensor>, target_row: i32) -> usize {
             }
 
             if sensor.beacon_position.0 == target_row
-                && !beacons_in_row.contains(&(sensor.beacon_position.0, sensor.beacon_position.1))
             {
-                beacons_in_row.insert((sensor.beacon_position.0, sensor.beacon_position.1));
+                positions.remove(&sensor.beacon_position.0);
             }
         }
     }
 
-    positions.len() - beacons_in_row.len()
+    positions.len() 
 }
 
 fn main() {
@@ -118,7 +116,10 @@ Sensor at x=2194423, y=3990859: closest beacon is at x=2275951, y=3717327",
     .unwrap();
     let y = 2000000;
 
+    let now = Instant::now();
     println!("Result: {}", get_sensor_area(sensors, y));
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
 }
 
 //================================================================================================
